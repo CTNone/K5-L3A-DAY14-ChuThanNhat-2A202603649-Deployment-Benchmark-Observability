@@ -26,3 +26,18 @@ Invoke-WebRequest "$base/ask" -Method Post -ContentType "application/json" -Body
 | `POST /ask` có `X-API-Key` hợp lệ, body `{"question":"deployment check"}` | 200 | Trả câu hỏi và câu trả lời mock |
 
 Request có key được gửi bằng PowerShell `Invoke-RestMethod`; key được nhập ẩn qua `Read-Host -AsSecureString` và không lưu trong báo cáo. PowerShell hiển thị tiếng Việt bị lỗi mã hóa ở terminal, nhưng request thành công.
+
+Để tự kiểm tra request có key, lấy giá trị từ secret manager/Render rồi nhập vào biến chỉ tồn tại trong phiên PowerShell; không ghi key vào file hoặc lệnh lưu trong history:
+
+```powershell
+$base = "https://k5-l3a-day14-chuthannhat-2a202603649.onrender.com"
+$secureKey = Read-Host "AGENT_API_KEY" -AsSecureString
+$ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureKey)
+try {
+    $apiKey = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
+    Invoke-RestMethod "$base/ask" -Method Post -Headers @{ "X-API-Key" = $apiKey } -ContentType "application/json" -Body '{"question":"deployment check"}'
+} finally {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
+    Remove-Variable apiKey, secureKey, ptr -ErrorAction SilentlyContinue
+}
+```

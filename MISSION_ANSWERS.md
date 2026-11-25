@@ -151,8 +151,8 @@ Chạy trong WSL2 với Python 3.11 và Docker bằng `python check_production_r
 | Graceful shutdown | ✅ Đạt — request đang chạy hoàn tất khi SIGTERM; process thoát code 0; `docker stop` thoát code 0 trong 1.0 giây |
 | Public URL ready (Railway / Render) | ✅ Đạt — cấu hình health check `/health`, app lắng nghe theo `PORT`; secret Render không ghi giá trị trực tiếp |
 
-**Kết quả tổng:** `PASS 12/12` — 43/43 kiểm tra con đạt. Docker image 257 MB. App cũng được xác nhận khởi động và phục vụ `/health` khi không có Redis. Chưa triển khai public URL.
+**Kết quả tổng:** `PASS 12/12` — 43/43 kiểm tra con đạt. Docker image 257 MB. App cũng được xác nhận khởi động và phục vụ `/health` khi không có Redis. Part 6 đã được deploy lên Render; URL và kết quả kiểm tra live được ghi trong `DEPLOYMENT.md`.
 
 ## AI log
 
-- TODO: ghi câu hỏi đã hỏi AI, gợi ý nhận được, phần tự sửa và cách tự kiểm tra.
+- Khi rà soát trước khi nộp, tôi nhờ AI đối chiếu các deliverable với `SUBMISSION.md`, tìm nội dung còn bỏ trống/mâu thuẫn và kiểm tra cách trình bày kết quả deploy. AI chỉ ra câu trạng thái deploy trong phần Part 6 đang mâu thuẫn với bảng Part 3 và `DEPLOYMENT.md`, cùng mục AI log còn TODO. Tôi tự sửa câu trạng thái để thống nhất theo kết quả deploy đã ghi nhận; sau đó đối chiếu `/health` và `/ready` trực tiếp trên URL Render (đều HTTP 200), kiểm tra `/ask` thiếu key (HTTP 401), và rà lại số lượng report, CSV, ảnh cùng Git status. AI không tạo số liệu benchmark hoặc kết quả kiểm tra lịch sử thay cho bằng chứng trong repo.

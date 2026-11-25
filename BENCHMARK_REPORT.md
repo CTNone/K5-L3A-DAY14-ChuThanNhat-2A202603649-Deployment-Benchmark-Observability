@@ -44,7 +44,7 @@ Mỗi lần chạy 200 request, SLO p95=500 ms và error rate=2%. RPS tăng rõ 
 
 **Nhận xét:** Chỉ số nào nhạy nhất với request chậm? Vì sao SLO không nên đặt theo average?
 
-P99 phản ứng trước tiên với tỉ lệ slow 0.03: p95 vẫn 235.3 ms nhưng p99 lên 1682.7 ms. Ở rate 0.1, slow response đủ nhiều để cả p95 tăng lên 1705.8 ms. Average che khuất nhóm request chậm nên không đại diện trải nghiệm đuôi. Mỗi cấu hình có 300 request, concurrency 10; error rate mặc định của mock khoảng 1%. File: `reports/load_v2_slow_*.json`.
+P99 phản ứng trước tiên với tỉ lệ slow 0.03: p95 vẫn 235.3 ms nhưng p99 lên 1682.7 ms. Ở rate 0.1, slow response đủ nhiều để cả p95 tăng lên 1705.8 ms. Average che khuất nhóm request chậm nên không đại diện trải nghiệm đuôi. Mỗi cấu hình có 300 request, concurrency 10; error rate mặc định của mock khoảng 1%. File: `reports/load_v2_slow_0.json`, `reports/load_v2_slow_0.03.json` và `reports/load_v2_slow_0.1.json`.
 
 ---
 
