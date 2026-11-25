@@ -124,7 +124,26 @@ Sau khi lưu kết quả, đã chạy `docker compose -p k5-day14-scaling down`;
 
 ## Part 6 — Final Project
 
-TODO: dán kết quả check_production_ready.py sau khi chạy.
+### Checklist Deliverable — kết quả `check_production_ready.py`
+
+Chạy trong WSL2 với Python 3.11 và Docker bằng `python check_production_ready.py` từ thư mục `06-lab-complete/`.
+
+| Deliverable | Kết quả |
+|---|---|
+| Dockerfile multi-stage, image < 500 MB | ✅ Đạt — image 257 MB; build thành công, container chạy được |
+| `docker-compose.yml` (agent + Redis) | ✅ Đạt — agent build từ Dockerfile, kết nối Redis và phụ thuộc health check Redis |
+| `.dockerignore` | ✅ Đạt — loại `.env`, `__pycache__` và `venv` |
+| `GET /health` | ✅ Đạt — HTTP 200 |
+| `GET /ready` | ✅ Đạt — HTTP 200 khi Redis hoạt động; HTTP 503 khi Redis không kết nối, `/health` vẫn hoạt động |
+| API key authentication | ✅ Đạt — thiếu/sai key bị từ chối; key đúng trả HTTP 200 |
+| Rate limiting | ✅ Đạt — vượt giới hạn trả HTTP 429; state Redis còn sau khi restart agent |
+| Cost guard | ✅ Đạt — vượt budget trả HTTP 402 |
+| Cấu hình từ environment variables | ✅ Đạt — checker xác nhận API key và rate limit đọc từ env; `.env.example` có đủ biến |
+| Structured logging | ✅ Đạt — 12 dòng log JSON hợp lệ |
+| Graceful shutdown | ✅ Đạt — request đang chạy hoàn tất khi SIGTERM; process thoát code 0; `docker stop` thoát code 0 trong 1.0 giây |
+| Public URL ready (Railway / Render) | ✅ Đạt — cấu hình health check `/health`, app lắng nghe theo `PORT`; secret Render không ghi giá trị trực tiếp |
+
+**Kết quả tổng:** `PASS 12/12` — 43/43 kiểm tra con đạt. Docker image 257 MB. App cũng được xác nhận khởi động và phục vụ `/health` khi không có Redis. Chưa triển khai public URL.
 
 ## AI log
 

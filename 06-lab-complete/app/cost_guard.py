@@ -1,21 +1,36 @@
-"""
-Cost guard (tiêu chí 8).
+"""Redis backed daily or monthly LLM cost guard."""
+from datetime import datetime, timezone
 
-Yêu cầu:
-  • Cộng dồn chi phí LLM (tính theo token) vào Redis
-  • Tổng chi phí vượt DAILY_BUDGET_USD (hoặc MONTHLY_BUDGET_USD) → HTTP 402
-"""
+from fastapi import HTTPException
 
-# Giá USD / 1K tokens (tham khảo gpt-4o-mini)
+from app.config import settings
+from app.redis_client import r
+
 PRICE_INPUT_PER_1K = 0.00015
 PRICE_OUTPUT_PER_1K = 0.0006
 
 
+def _period(now: datetime) -> tuple[str, float, int]:
+    if settings.monthly_budget_usd > 0:
+        return now.strftime("%Y-%m"), settings.monthly_budget_usd, 32 * 24 * 60 * 60
+    next_day = now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp() + 86400
+    return now.strftime("%Y-%m-%d"), settings.daily_budget_usd, max(1, int(next_day - now.timestamp()))
+
+
 def check_budget() -> None:
-    """Gọi TRƯỚC khi gọi LLM. Hết budget → raise HTTPException(status_code=402)."""
-    raise NotImplementedError("TODO: check_budget")
+    period, budget, _ = _period(datetime.now(timezone.utc))
+    current = float(r.get(f"cost:{period}") or 0)
+    if current >= budget:
+        raise HTTPException(status_code=402, detail="Budget exceeded")
 
 
 def record_cost(input_tokens: int, output_tokens: int) -> float:
-    """Gọi SAU khi gọi LLM. Cộng chi phí của request vào tổng, trả về chi phí request."""
-    raise NotImplementedError("TODO: record_cost")
+    cost = (max(1, int(input_tokens)) * PRICE_INPUT_PER_1K
+            + max(1, int(output_tokens)) * PRICE_OUTPUT_PER_1K) / 1000
+    period, _, ttl = _period(datetime.now(timezone.utc))
+    key = f"cost:{period}"
+    pipe = r.pipeline()
+    pipe.incrbyfloat(key, cost)
+    pipe.expire(key, ttl)
+    pipe.execute()
+    return cost
