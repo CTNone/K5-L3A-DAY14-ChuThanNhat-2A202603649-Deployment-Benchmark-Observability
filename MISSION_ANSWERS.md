@@ -31,7 +31,62 @@ Chạy trong WSL2 bằng `python app.py`, sau đó gửi `curl -i -X POST "http:
 
 ## Part 2 — Docker
 
-TODO: trả lời Exercise 2.1; ghi kết quả container, kích thước image đo được, sơ đồ stack và test Nginx.
+### Exercise 2.1 — Dockerfile cơ bản
+
+1. Base image là `python:3.11` (bản đầy đủ).
+2. Working directory trong container là `/app`.
+3. `requirements.txt` được copy và cài trước source code để Docker cache layer cài dependency. Khi chỉ sửa code, các dependency không phải cài lại.
+4. `CMD` đặt lệnh mặc định và có thể được thay khi chạy container. `ENTRYPOINT` xác định chương trình chính; tham số truyền khi chạy sẽ được đưa vào chương trình đó. Có thể kết hợp `ENTRYPOINT` và `CMD` để đặt tham số mặc định.
+
+### Exercise 2.2 — Build và chạy image
+
+Build từ gốc repo theo hướng dẫn K5:
+
+```bash
+docker build -f 02-docker/develop/Dockerfile -t my-agent:develop .
+```
+
+Kiểm tra kích thước bằng `docker image ls my-agent --format '{{.Repository}}:{{.Tag}} {{.Size}}'`:
+
+| Image | Kích thước đo được |
+|---|---:|
+| `my-agent:develop` | 1.67 GB |
+| `my-agent:advanced` | 240 MB |
+
+Image advanced nhỏ hơn khoảng 86%. Container develop trả HTTP 200 cho `GET /health` và `POST /ask?question=What%20is%20Docker`. Container advanced trả HTTP 200 cho `GET /health` và `POST /ask` với JSON body.
+
+### Exercise 2.3 — Multi-stage build
+
+Stage 1 (`builder`) cài công cụ build và các thư viện Python. Stage 2 (`runtime`) bắt đầu từ `python:3.11-slim`, chỉ chép các package và file app cần để chạy. Image cuối không chứa compiler và các công cụ chỉ dùng khi build nên nhỏ hơn; kích thước đo được là 240 MB.
+
+### Exercise 2.4 — Docker Compose
+
+Khởi động stack bằng lệnh:
+
+```bash
+docker compose -p k5-day14-docker -f 02-docker/production/docker-compose.yml up -d --build
+```
+
+Có 4 service: agent, Redis, Qdrant và Nginx. Agent, Redis và Qdrant báo trạng thái healthy. Kiểm tra qua Nginx: `GET /health` trả HTTP 200; `POST /ask` với câu hỏi `Explain microservices` trả HTTP 200. Sau đó dừng stack và dọn volume bằng:
+
+```bash
+docker compose -p k5-day14-docker -f 02-docker/production/docker-compose.yml down -v
+```
+
+```mermaid
+flowchart LR
+    Client[Client] -->|HTTP :80 / HTTPS :443| Nginx[Nginx reverse proxy]
+    Nginx -->|proxy qua mạng nội bộ| Agent[FastAPI agent :8000]
+    Agent -->|REDIS_URL| Redis[(Redis 7)]
+    Agent -->|QDRANT_URL| Qdrant[(Qdrant vector DB)]
+```
+
+Nginx nhận request từ bên ngoài và chuyển tiếp đến agent trong mạng Compose. Agent dùng Redis cho cache/session và Qdrant cho tìm kiếm vector. `depends_on` cùng health check bảo đảm Redis và Qdrant sẵn sàng trước khi agent khởi động.
+
+### Câu hỏi thảo luận
+
+- `.dockerignore` nên loại `.env`/secret, `venv/`, `__pycache__/`, metadata Git và file sinh ra khi chạy. Việc này tránh gửi secret vào build context, giảm dữ liệu không cần thiết và tránh đưa môi trường riêng của máy vào image.
+- Mount thư mục hoặc named volume vào container bằng `docker run -v thu_muc_may:/app/data ...`, hoặc khai báo `volumes:` trong Compose. Nếu container chỉ cần đọc dữ liệu, mount dạng chỉ đọc, ví dụ `:ro`.
 
 ## Part 3 — Cloud Deployment
 
