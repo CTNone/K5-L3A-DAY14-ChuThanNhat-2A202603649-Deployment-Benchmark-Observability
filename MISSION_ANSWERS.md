@@ -98,7 +98,15 @@ Nginx nhận request từ bên ngoài và chuyển tiếp đến agent trong m�
 4. `service.yaml` khai báo service tương đương dưới dạng cấu hình: concurrency 80, tài nguyên, biến môi trường và secrets lấy từ Secret Manager.
 5. Service mở ingress công khai và cấu hình liveness `/health`, startup/readiness `/ready`; đây là mô tả cấu hình đọc từ file, chưa phải bằng chứng đã deploy.
 
-Nền tảng deploy Part 6 và URL sau khi deploy: **chưa thực hiện**.
+### So sánh lựa chọn deploy và kết quả Part 6
+
+| Nền tảng | Cách cấu hình trong lab | Kết quả |
+|---|---|---|
+| Railway | `06-lab-complete/railway.toml` chọn builder Dockerfile và health check `/health`; cần cấu hình `REDIS_URL` và `AGENT_API_KEY` trong biến môi trường của service. | Là lựa chọn thay thế; Part 6 không deploy lên Railway. |
+| Render | `06-lab-complete/render.yaml` mô tả Docker Web Service và health check `/health`. Khi tạo thủ công, đặt Root Directory là `06-lab-complete`, chọn Docker, sau đó kết nối Render Key Value cùng region và đặt `REDIS_URL`/`AGENT_API_KEY` trong Environment. | Đã deploy Part 6 tại https://k5-l3a-day14-chuthannhat-2a202603649.onrender.com. Kiểm tra thực tế: `/health` 200, `/ready` 200 (`redis: true`), `/ask` thiếu key 401, `/ask` có key 200. Log xác nhận `ENVIRONMENT=production`. |
+| Cloud Run | Pipeline Part 3 dùng Cloud Build để chạy test, build/tag/push image rồi deploy lên Cloud Run; `service.yaml` mô tả cấu hình tài nguyên, secrets và health probes. | Nội dung Cloud Run ở phần trên là mô tả pipeline/configuration của bài lab, không phải bằng chứng deploy Cloud Run. |
+
+Part 6 được deploy trên Render, không dùng app mẫu Part 3. Redis Key Value kết nối được qua `REDIS_URL`; API key lưu dưới dạng biến môi trường bí mật, không ghi giá trị vào báo cáo.
 
 ## Part 4 — API Security
 
