@@ -90,7 +90,15 @@ Nginx nhận request từ bên ngoài và chuyển tiếp đến agent trong m�
 
 ## Part 3 — Cloud Deployment
 
-TODO: mô tả pipeline Cloud Run (Exercise 3.3), nền tảng deploy Part 6 và URL sau khi deploy.
+### Exercise 3.3 — Pipeline Cloud Run
+
+1. Cloud Build cài dependencies và chạy `pytest tests/`; bước build chỉ chạy sau khi test thành công.
+2. Pipeline build Docker image có tag theo `$COMMIT_SHA` và `latest`, rồi push các tag lên Container Registry.
+3. Sau khi push xong, pipeline deploy image theo commit lên Cloud Run ở `asia-southeast1`, cấu hình 1–10 instances, 512 MiB RAM, 1 CPU và timeout 60 giây.
+4. `service.yaml` khai báo service tương đương dưới dạng cấu hình: concurrency 80, tài nguyên, biến môi trường và secrets lấy từ Secret Manager.
+5. Service mở ingress công khai và cấu hình liveness `/health`, startup/readiness `/ready`; đây là mô tả cấu hình đọc từ file, chưa phải bằng chứng đã deploy.
+
+Nền tảng deploy Part 6 và URL sau khi deploy: **chưa thực hiện**.
 
 ## Part 4 — API Security
 
