@@ -116,7 +116,11 @@ Nền tảng deploy Part 6 và URL sau khi deploy: **chưa thực hiện**.
 
 ## Part 5 — Scaling & Reliability
 
-TODO: ghi kết quả scale 3 instance và test_stateless.py.
+### Kết quả scale 3 instance và `test_stateless.py`
+
+Trong WSL2, tạo `.env.local` rỗng theo hướng dẫn và chạy `docker compose -p k5-day14-scaling up -d --build --scale agent=3`. `docker compose ps` cho thấy 3 container agent, Redis healthy và Nginx publish cổng 8080. `python3 test_stateless.py` hoàn tất 5 request trong cùng session; các request được phục vụ bởi 3 instance khác nhau (`instance-58fdf7`, `instance-8a134c`, `instance-777aea`). Endpoint history trả đủ 10 tin nhắn (5 user + 5 assistant), xác nhận session state được chia sẻ qua Redis khi request đi qua nhiều instance.
+
+Sau khi lưu kết quả, đã chạy `docker compose -p k5-day14-scaling down`; các container và network của stack đã được dừng và gỡ bỏ.
 
 ## Part 6 — Final Project
 
