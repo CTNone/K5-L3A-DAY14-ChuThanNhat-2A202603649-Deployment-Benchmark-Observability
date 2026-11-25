@@ -102,7 +102,17 @@ Nền tảng deploy Part 6 và URL sau khi deploy: **chưa thực hiện**.
 
 ## Part 4 — API Security
 
-TODO: ghi kết quả HTTP 401/200/429; che token.
+### Kết quả Part 4 — JWT, rate limit và cost guard
+
+Đã chạy bản `04-api-gateway/production` trong WSL2. Lấy JWT bằng tài khoản demo `student` (token không được lưu/dán vào báo cáo). Kết quả `curl -i` tương ứng:
+
+| Trường hợp | Kết quả | Ý nghĩa |
+|---|---|---|
+| Gọi `POST /ask` không có Authorization | `HTTP 401 Unauthorized` — `Authentication required` | Endpoint yêu cầu JWT hợp lệ. |
+| Gọi `POST /ask` với JWT hợp lệ và JSON `{"question":"what is docker?"}` | `HTTP 200 OK` — trả câu trả lời mock | Xác thực thành công, request được xử lý. |
+| Gửi request hợp lệ liên tục với cùng user | Request thứ 11 trong cửa sổ 60 giây trả `HTTP 429 Too Many Requests`, `Retry-After: 59` giây | User tier bị giới hạn 10 request/phút; server yêu cầu chờ trước khi thử lại. |
+
+**Cost guard:** trước khi gọi LLM, code kiểm tra chi phí đã ghi nhận trong ngày. Budget là `$1/ngày/user` và `$10/ngày toàn hệ thống`; cảnh báo khi user dùng từ 80% budget. Nếu vượt budget user, trả `402`; nếu vượt budget toàn cục, tạm ngưng với `503`. Sau khi gọi LLM, code cộng token/chi phí vào usage. Trong lab, LLM là mock và token count/giá chỉ mô phỏng; `CostGuard` lưu trong bộ nhớ nên mất khi restart và không chia sẻ giữa nhiều instance. Ngoài ra, response hiện gán `usage.total_cost_usd` vào trường `budget_remaining_usd`, nên con số trong trường đó thực tế là chi phí đã dùng, không phải ngân sách còn lại.
 
 ## Part 5 — Scaling & Reliability
 
