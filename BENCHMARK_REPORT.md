@@ -81,36 +81,46 @@ Lệnh gate: `python eval/run_eval.py --url http://127.0.0.1:8000 --min-accuracy
 
 ### 4.1 Screenshot
 
-- [ ] Dashboard Grafana khi đang có tải (thấy rõ Golden Signals)
-- [ ] Một trace chậm trong Jaeger (thấy span nào chiếm thời gian)
-- [ ] Một trace lỗi trong Jaeger (có event `exception`)
-- [ ] Trang Alerts của Prometheus với ít nhất 1 alert đang **firing**
+- [x] Dashboard Grafana khi đang có tải (thấy rõ Golden Signals) — `screenshots/grafana-dashboard.png`
+- [x] Một trace chậm trong Jaeger (thấy span nào chiếm thời gian) — `screenshots/jaeger-slow-trace.png`
+- [x] Một trace lỗi trong Jaeger (có event `exception`) — `screenshots/jaeger-error-trace.png`
+- [x] Trang Alerts của Prometheus với ít nhất 1 alert đang **firing** — `screenshots/prometheus-alert-firing.png` (2 alerts firing cùng lúc)
 
 ### 4.2 Thí nghiệm "phá hệ thống"
 
 | # | Thay đổi | Alert nào firing | Thời gian từ lúc đổi → firing | Panel nào phản ánh rõ nhất |
 |---|---|---|---|---|
-| A | `MOCK_ERROR_RATE=0.2` | | | |
-| B | `MOCK_SLOW_RATE=0.3` | | | |
-| C | `LLM_MODEL=mock-llm-large` | | | |
-| D | `docker pause` 1 instance | | | |
-| E | `AGENT_VERSION=v1` | | | |
+| A | `MOCK_ERROR_RATE=0.2` | `AgentHighErrorRate` (~1m09s sau khi bắt đầu tải) | ~1m09s | Error rate; khoảng 20–21% |
+| B | `MOCK_SLOW_RATE=0.3` | `AgentHighLatencyP95` (~2m09s sau khi bắt đầu tải) | ~2m09s | Latency p95/p99; p95 ~1.9 s |
+| C | `LLM_MODEL=mock-llm-large` | `LLMCostBurnRateHigh` (~2m15s sau khi bắt đầu tải) | ~2m15s | Cost USD/hour; burn rate quan sát được khoảng $11–$15/hour |
+| D | `docker pause k5-day14-observability-agent-2` | `AgentInstanceDown` | ~37s sau khi pause | Instances up / Prometheus target; Locust thấy 29 lỗi 504 và 9 lỗi 503 |
+| E | `AGENT_VERSION=v1` | Không có alert chất lượng mới | Không phát hiện bằng alert hạ tầng | Agent version và retrieval hit ratio; v1 hiện trên `agent_info`, retrieval series không xuất hiện |
+
+A và B được kích hoạt đồng thời trong một lượt tải: ảnh Prometheus ghi nhận `AgentHighErrorRate` và `AgentHighLatencyP95` cùng **FIRING**. Thời gian trong bảng là thời gian quan sát từ lúc bắt đầu lượt tải đến khi mỗi alert chuyển trạng thái; lần lượt khoảng 1m09s và 2m09s. Ảnh Grafana/Prometheus, CSV từng thí nghiệm và trace JSON/JSONL đã được lưu trong repo.
 
 **Thí nghiệm E không làm alert nào firing. Bạn sẽ phát hiện loại sự cố này trong production bằng cách nào?**
 
-...
+Sự cố chất lượng không tự làm các Golden Signals hạ tầng báo đỏ. Cần chạy golden dataset eval trước deploy và định kỳ, theo dõi accuracy/regression theo version, retrieval hit/miss và phản hồi người dùng; đặt quality gate làm điều kiện release.
 
 ### 4.3 Debug bằng trace
 
 Chọn 1 trace chậm nhất bạn tìm được:
 
-- `trace_id`: ...
-- Tổng thời gian: ... ms
-- Span chiếm nhiều thời gian nhất: ... (... ms, ...%)
+- `trace_id`: `011c45688cd30f0dcd9f1029966c835d`
+- Tổng thời gian: 1676.3 ms
+- Span chiếm nhiều thời gian nhất: `chat mock-llm-small` (1651.4 ms, 98.5%)
 - Dòng log tương ứng (grep theo `trace_id`):
 
 ```json
+{"ts":"2026-11-25T15:21:36.646052+00:00","level":"INFO","service":"observable-agent","instance":"b39d3c80b2f3","event":"llm_call","trace_id":"011c45688cd30f0dcd9f1029966c835d","span_id":"85674ff2bdddd5df","request_id":"a0aef5f5f3f2","model":"mock-llm-small","agent_version":"v2","input_tokens":68,"output_tokens":35,"cost_usd":3.1e-05,"llm_ms":1649.5}
+{"ts":"2026-11-25T15:21:36.646977+00:00","level":"INFO","service":"observable-agent","instance":"b39d3c80b2f3","event":"http_request","trace_id":"011c45688cd30f0dcd9f1029966c835d","span_id":"85674ff2bdddd5df","request_id":"a0aef5f5f3f2","method":"POST","route":"/ask","status":200,"ms":1675.1}
+```
 
+Trace lỗi: `10bca863cd92dd256f3c51d61746353b` (862.3 ms); span `chat mock-llm-small` có event `exception` với `utils.mock_llm.LLMError`. Log JSON tương ứng:
+
+```json
+{"ts":"2026-11-25T15:21:37.782896+00:00","level":"INFO","service":"observable-agent","instance":"b39d3c80b2f3","event":"llm_error","trace_id":"10bca863cd92dd256f3c51d61746353b","span_id":"e1119f8ec347190a","request_id":"f2469985924a","error":"Upstream LLM error: 503 Service Unavailable (mock)"}
+{"ts":"2026-11-25T15:21:37.783307+00:00","level":"INFO","service":"observable-agent","instance":"b39d3c80b2f3","event":"http_request","trace_id":"10bca863cd92dd256f3c51d61746353b","span_id":"e1119f8ec347190a","request_id":"f2469985924a","method":"POST","route":"/ask","status":503,"ms":861.6}
 ```
 
 ---
@@ -119,12 +129,14 @@ Chọn 1 trace chậm nhất bạn tìm được:
 
 | Số instance | RPS | p50 (ms) | p95 (ms) | p99 (ms) | Failures |
 |---|---|---|---|---|---|
-| 1 | | | | | |
-| 3 | | | | | |
+| 1 | 64.62 | 200 | 530 | 1700 | 65 / 7673 |
+| 3 | 65.61 | 190 | 250 | 1700 | 64 / 7796 |
 
 **Giải thích kết quả:** Scale có cải thiện p95 không? Nút thắt nằm ở đâu?
 
-...
+Ba replica giảm p95 từ 530 xuống 250 ms (~53%) và p50 từ 200 xuống 190 ms, nhưng RPS chỉ tăng khoảng 1.5%. p99 vẫn 1.7 s ở cả hai cấu hình; điều này khớp với 3% slow mock call cộng thêm khoảng 1.5 s, nên các request đuôi chậm vẫn chi phối dù đã scale. CSV đầy đủ ở `benchmark-results/scale_1_stats.csv` và `benchmark-results/scale_3_stats.csv`; Locust có một số 503 ngẫu nhiên theo cấu hình mock.
+
+Cost/quality trade-off của thí nghiệm C: model `mock-llm-large` làm `LLMCostBurnRateHigh` firing khi cost rate vượt ngưỡng, trong khi thí nghiệm E cho thấy đổi sang v1 không tạo cảnh báo hạ tầng dù chất lượng retrieval suy giảm. Vì vậy cần ghép cost alert với eval theo version; quality gate cuối dùng accuracy 1.0 và baseline `reports/eval_v2.json`, và đã PASS sau khi sửa knowledge base.
 
 ---
 
@@ -132,8 +144,8 @@ Chọn 1 trace chậm nhất bạn tìm được:
 
 - 3 điều bạn học được về benchmark & observability:
   1. p95/p99 và tail latency cho thấy request chậm mà average hoặc p50 bỏ qua.
-  2. Concurrency lớn hơn không bảo đảm throughput cao hơn; queueing làm SLO p95 thất bại ở mức 50 và 100.
-  3. Golden eval phát hiện hai khoảng trống KB; thêm nội dung đúng giúp v2 lên 100% và CI gate bắt được regression.
+  2. Thêm replica giảm p95 dưới workload này, nhưng không loại bỏ p99 do slow call; throughput không tăng tuyến tính.
+  3. Metrics/traces phát hiện lỗi hạ tầng, còn chất lượng câu trả lời cần golden eval riêng và quality gate.
 - Nếu đưa agent này lên production thật, bạn sẽ thêm metric / alert nào nữa?
 
-Trong production thật, bổ sung metric theo category/intent và tỷ lệ retrieval miss có cardinality thấp; alert theo burn rate của SLO, chất lượng eval và ngân sách cost, đồng thời theo dõi freshness của KB. Phần observability stack và scaling chưa chạy trong lượt này.
+Trong production thật, bổ sung metric theo category/intent và tỷ lệ retrieval miss có cardinality thấp; alert theo burn rate của SLO, chất lượng eval và ngân sách cost, đồng thời theo dõi freshness của KB. Kết quả này là lab local trên Docker Desktop, không phải bằng chứng deployment production.

@@ -1,0 +1,281 @@
+{
+  "data": [
+    {
+      "traceID": "011c45688cd30f0dcd9f1029966c835d",
+      "spans": [
+        {
+          "traceID": "011c45688cd30f0dcd9f1029966c835d",
+          "spanID": "94d4234ad5eeceab",
+          "operationName": "agent.retrieve_context",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "011c45688cd30f0dcd9f1029966c835d",
+              "spanID": "bf68bd9daede2d23"
+            }
+          ],
+          "startTime": 1795620094973678,
+          "duration": 20376,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "agent"
+            },
+            {
+              "key": "retrieval.documents",
+              "type": "int64",
+              "value": 1
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "internal"
+            }
+          ],
+          "logs": [],
+          "processID": "p1",
+          "warnings": null
+        },
+        {
+          "traceID": "011c45688cd30f0dcd9f1029966c835d",
+          "spanID": "3b98680120c4c02c",
+          "operationName": "chat mock-llm-small",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "011c45688cd30f0dcd9f1029966c835d",
+              "spanID": "bf68bd9daede2d23"
+            }
+          ],
+          "startTime": 1795620094994420,
+          "duration": 1651433,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "agent"
+            },
+            {
+              "key": "gen_ai.operation.name",
+              "type": "string",
+              "value": "chat"
+            },
+            {
+              "key": "gen_ai.provider.name",
+              "type": "string",
+              "value": "mock"
+            },
+            {
+              "key": "gen_ai.request.model",
+              "type": "string",
+              "value": "mock-llm-small"
+            },
+            {
+              "key": "gen_ai.usage.input_tokens",
+              "type": "int64",
+              "value": 68
+            },
+            {
+              "key": "gen_ai.usage.output_tokens",
+              "type": "int64",
+              "value": 35
+            },
+            {
+              "key": "llm.cost_usd",
+              "type": "float64",
+              "value": 3.12E-05
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "internal"
+            }
+          ],
+          "logs": [],
+          "processID": "p1",
+          "warnings": null
+        },
+        {
+          "traceID": "011c45688cd30f0dcd9f1029966c835d",
+          "spanID": "bf68bd9daede2d23",
+          "operationName": "agent.run",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "011c45688cd30f0dcd9f1029966c835d",
+              "spanID": "85674ff2bdddd5df"
+            }
+          ],
+          "startTime": 1795620094973589,
+          "duration": 1672367,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "agent"
+            },
+            {
+              "key": "agent.question.length",
+              "type": "int64",
+              "value": 30
+            },
+            {
+              "key": "agent.version",
+              "type": "string",
+              "value": "v2"
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "internal"
+            }
+          ],
+          "logs": [],
+          "processID": "p1",
+          "warnings": null
+        },
+        {
+          "traceID": "011c45688cd30f0dcd9f1029966c835d",
+          "spanID": "85674ff2bdddd5df",
+          "operationName": "POST /ask",
+          "references": [],
+          "startTime": 1795620094971500,
+          "duration": 1676335,
+          "tags": [
+            {
+              "key": "otel.scope.name",
+              "type": "string",
+              "value": "opentelemetry.instrumentation.fastapi"
+            },
+            {
+              "key": "otel.scope.version",
+              "type": "string",
+              "value": "0.66b2"
+            },
+            {
+              "key": "http.flavor",
+              "type": "string",
+              "value": "1.1"
+            },
+            {
+              "key": "http.host",
+              "type": "string",
+              "value": "172.18.0.4:8000"
+            },
+            {
+              "key": "http.method",
+              "type": "string",
+              "value": "POST"
+            },
+            {
+              "key": "http.route",
+              "type": "string",
+              "value": "/ask"
+            },
+            {
+              "key": "http.scheme",
+              "type": "string",
+              "value": "http"
+            },
+            {
+              "key": "http.server_name",
+              "type": "string",
+              "value": "localhost"
+            },
+            {
+              "key": "http.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "http.target",
+              "type": "string",
+              "value": "/ask"
+            },
+            {
+              "key": "http.url",
+              "type": "string",
+              "value": "http://localhost/ask"
+            },
+            {
+              "key": "http.user_agent",
+              "type": "string",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Microsoft Windows 10.0.19045; vi-VN) PowerShell/7.6.9"
+            },
+            {
+              "key": "net.host.port",
+              "type": "int64",
+              "value": 8000
+            },
+            {
+              "key": "net.peer.ip",
+              "type": "string",
+              "value": "172.18.0.6"
+            },
+            {
+              "key": "net.peer.port",
+              "type": "int64",
+              "value": 40806
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            }
+          ],
+          "logs": [],
+          "processID": "p1",
+          "warnings": null
+        }
+      ],
+      "processes": {
+        "p1": {
+          "serviceName": "observable-agent",
+          "tags": [
+            {
+              "key": "agent.version",
+              "type": "string",
+              "value": "v2"
+            },
+            {
+              "key": "deployment.environment.name",
+              "type": "string",
+              "value": "lab"
+            },
+            {
+              "key": "service.instance.id",
+              "type": "string",
+              "value": "b39d3c80b2f3"
+            },
+            {
+              "key": "service.version",
+              "type": "string",
+              "value": "1.0.0"
+            },
+            {
+              "key": "telemetry.sdk.language",
+              "type": "string",
+              "value": "python"
+            },
+            {
+              "key": "telemetry.sdk.name",
+              "type": "string",
+              "value": "opentelemetry"
+            },
+            {
+              "key": "telemetry.sdk.version",
+              "type": "string",
+              "value": "1.45.2"
+            }
+          ]
+        }
+      },
+      "warnings": null
+    }
+  ],
+  "total": 0,
+  "limit": 0,
+  "offset": 0,
+  "errors": null
+}
